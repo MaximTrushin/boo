@@ -88,9 +88,50 @@ namespace Boo.Lang.Compiler.Util
 
 		public delegate void TAction<T1, T2, T3, T4, T5>(T1 p1, T2 p2, T3 p3, T4 p4, T5 p5);
 
+		public static MethodInfo InstanceActionOf<TInstance>(Expression<Func<TInstance, Action>> func)
+		{
+			return MethodInfoFromLambdaExpressionBody(func.Body);
+		}
+
+		public static MethodInfo InstanceActionOf<TInstance, T1, T2>(Expression<Func<TInstance, Action<T1, T2>>> func)
+		{
+			return MethodInfoFromLambdaExpressionBody(func.Body);
+		}
+
+		public static MethodInfo InstanceFunctionOf<TInstance, TArg1>(Expression<Func<TInstance, Func<TArg1>>> func)
+		{
+			return MethodInfoFromLambdaExpressionBody(func.Body);
+		}
+
+		public static MethodInfo InstanceFunctionOf<TInstance, TArg1, TReturn>(Expression<Func<TInstance, Func<TArg1, TReturn>>> func)
+		{
+			return MethodInfoFromLambdaExpressionBody(func.Body);
+		}
+
+		public static MethodInfo InstanceFunctionOf<TInstance, TArg1, TArg2, TReturn>(Expression<Func<TInstance, Func<TArg1, TArg2, TReturn>>> func)
+		{
+			return MethodInfoFromLambdaExpressionBody(func.Body);
+		}
+
 		public static MethodInfo GetterOf<TInstance, TProperty>(Expression<Func<TInstance, TProperty>> func)
 		{
 			return ((PropertyInfo)((MemberExpression)func.Body).Member).GetGetMethod();
+		}
+
+		private static MethodInfo MethodInfoFromLambdaExpressionBody(Expression expression)
+		{
+			// Convert(CreateDelegate(DelegateType, instance, member))
+			var operand = ((MethodCallExpression) ((UnaryExpression) expression).Operand);
+			ConstantExpression methodRef;
+
+			if (operand.Object != null)
+				//.NET 4.5
+				methodRef = (ConstantExpression) operand.Object;
+			else
+				//Before .NET 4.5
+				methodRef = (ConstantExpression) operand.Arguments[2];
+
+			return (MethodInfo) (methodRef).Value;
 		}
 
 		public static ConstructorInfo ConstructorOf<T>(Expression<Func<T>> func)
